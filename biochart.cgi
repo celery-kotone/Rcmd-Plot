@@ -50,7 +50,7 @@ if ( $cht eq "hist" ) {
     $plot->hist();
 }
 
-unless( -e ) {
+unless( -e  "./graph" ) {
     mkdir "graph", 0777 or die "$!:graph";
 }
 
