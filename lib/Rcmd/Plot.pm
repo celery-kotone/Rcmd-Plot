@@ -76,7 +76,7 @@ sub exec_plot {
         $thys->query_params,
         $plot,
         $thys->query_legend,
-        "dev.off()"
+        "graphics.off()"
     );
 
     return 0;
@@ -171,7 +171,7 @@ sub query_params {
 
     my $bgcolor   = $thys->process_color("bgcolor");
     my $fontcolor = $thys->process_color("fontcolor"); 
-    my $overflow  = $thys->process_color("overflow");
+    my $overflow  = $thys->get("overflow");
 
     my $params =  sprintf( "par(bg=%s,col.main=%s,col.lab=%s,xpd=%s)",
                            $bgcolor, $fontcolor, $fontcolor, $overflow );
