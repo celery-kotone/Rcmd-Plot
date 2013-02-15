@@ -1,0 +1,27 @@
+Rcmd-Plot version 1.0.0
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+	perl Build.PL
+	./Build
+	./Build test
+	./Build install
+
+
+DEPENDENCIES
+
+Perl
+-Rcmd
+R language environment
+-RColorBrewer package
+-Vennerable package **Not in need yet
+
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2013, Kotone Itaya
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
