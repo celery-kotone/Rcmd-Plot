@@ -3,7 +3,7 @@ use Test::More tests => 7;
 use Rcmd::Plot;
 
 my $plot;
-ok $plot = Rcmd::Plot->new("data" => "rnorm(100)");
+ok $plot = Rcmd::Plot->new("data" => "1,2,2,3,3,3,4,4,4,4");
 is $plot->scat, 0;
 is $plot->pie,  0;
 is $plot->bar,  0;
