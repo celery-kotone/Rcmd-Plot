@@ -8,17 +8,17 @@ use Rcmd::Plot;
 
 my $cgi = CGI->new();
 
-my $chd = $cgi->param("chd");
-my $chs = $cgi->param("chs");
-my $cht = $cgi->param("cht");
-
-my $chif = $cgi->param("chf");
-my $chtt = $cgi->param("chtt");
-my $chxt = $cgi->param("chxt");
-my $chco = $cgi->param("chco");
-my $chls = $cgi->param("chls");
-my $chlt = $cgi->param("chlt");
-my $chdl = $cgi->param("chdl");
+my $chd   = $cgi->param("chd");
+my $chs   = $cgi->param("chs");
+my $cht   = $cgi->param("cht");
+my $chif  = $cgi->param("chif");
+my $chtt  = $cgi->param("chtt");
+my $chxt  = $cgi->param("chxt");
+my $chco  = $cgi->param("chco");
+my $chls  = $cgi->param("chls");
+my $chlt  = $cgi->param("chlt");
+my $chdl  = $cgi->param("chdl");
+my $chdlp = $cgi->param("chdlp");
 
 my ( $width,  $height ) = split /[x,\/\| \t]/, $chs;
 my ( $xlabel, $ylabel ) = split /[x,\/\| \t]/, $chxt;
@@ -41,8 +41,9 @@ my $plot = Rcmd::Plot->new(
     ( color     => $chco ) x !!($chco),
     ( linestyle => $chls ) x !!($chls),
     ( linetype  => $chlt ) x !!($chlt),
-    ( format    => $chif ) x !!($chif),
     ( legend    => $chdl ) x !!($chdl),
+    ( legendpos => $chdlp ) x !!($chdlp),
+    format   => "png",
     filename => "./graph/$filename"
 );
 
@@ -66,11 +67,18 @@ if ( $cht eq "hist" ) {
     $plot->hist();
 }
 
-unless( -e  "./graph" ) {
+unless ( -e "./graph" ) {
     mkdir "graph", 0777 or die "$!:graph";
 }
 
 if ( -e "./graph/$filename" ) {
     chmod 777, "./graph/$filename";
     print "Location: http://localhost/~kotone/biochart/graph/$filename\n\r\n";
+    exit;
 }
+
+print $cgi->header( -status => '400 Bad request' );
+print $cgi->start_html( -title => 'Bad request' );
+print $cgi->h1('400 Bad request');
+print $cgi->p('A bad qualifier has been passed.');
+print $cgi->end_html;
