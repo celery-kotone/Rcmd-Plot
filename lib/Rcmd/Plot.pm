@@ -11,27 +11,27 @@ use base qw(Class::Accessor Rcmd);
 Rcmd::Plot->follow_best_practice;
 
 my %defaults = (
-    "width"          => 640,
-    "height"         => 480,
-    "title"          => "",
-    "xlabel"         => "",
-    "ylabel"         => "",
-    "format"         => "postscript",
-    "filename"       => "default",
-    "color"          => "default",
-    "linestyle"      => "p",
-    "linetype"       => "default",
-    "point"          => "default",
-    "legend"         => "",
-    "legendborder"   => "rgb(0,0,0,alpha=0)",
-    "legendposition" => "topleft",
-    "internal"       => "library(RColorBrewer)",
-    "library"        => "",
-    "bgcolor"        => "white",
-    "fontcolor"      => "black",
-    "overflow"       => "T",
-    "sets"           => 1,
-    "breaks"         => "Sturges"
+    "width"     => 640,
+    "height"    => 480,
+    "title"     => "",
+    "xlabel"    => "",
+    "ylabel"    => "",
+    "format"    => "postscript",
+    "filename"  => "default",
+    "color"     => "default",
+    "linestyle" => "p",
+    "linetype"  => "default",
+    "point"     => "default",
+    "legend"    => "",
+    "legendbor" => "rgb(0,0,0,alpha=0)",
+    "legendpos" => "topleft",
+    "internal"  => "library(RColorBrewer)",
+    "library"   => "",
+    "bgcolor"   => "white",
+    "fontcolor" => "black",
+    "overflow"  => "T",
+    "sets"      => 1,
+    "breaks"    => "Sturges"
 );
 
 sub new {
@@ -77,7 +77,7 @@ sub exec_plot {
         $plot,
         $thys->query_legend,
         "graphics.off()"
-    );
+        );
 
     return 0;
 }
@@ -97,10 +97,11 @@ sub process_color {
     my $thys = shift;
     my $type;
 
-    if( ~~ @_ ) {
+    if ( ~~ @_ ) {
         $type = shift;
-    } else {
-        $type = "color"
+    }
+    else {
+        $type = "color";
     }
 
     my $sets  = $thys->get("sets");
@@ -108,7 +109,7 @@ sub process_color {
 
     $sets += !$sets;
 
-    if( $sets < 3 && $color eq "mat" ) {
+    if ( $sets < 3 && $color eq "mat" ) {
         $sets = 3;
     }
 
@@ -153,15 +154,15 @@ sub process_filename {
     my $format   = $thys->get("format");
 
     $format = "ps"
-        if $format eq "postscript";
+      if $format eq "postscript";
 
     $filename .= sprintf( ".%s", $format )
-        if $filename eq "default";
+      if $filename eq "default";
 
-    $filename .= sprintf( "%s.", $format)
-        if($filename !~ /$format/);
+    $filename .= sprintf( "%s.", $format )
+      if ( $filename !~ /$format/ );
 
-    $thys->set("filename", $filename);
+    $thys->set( "filename", $filename );
 
     return 0;
 }
@@ -170,11 +171,11 @@ sub query_params {
     my $thys = shift;
 
     my $bgcolor   = $thys->process_color("bgcolor");
-    my $fontcolor = $thys->process_color("fontcolor"); 
+    my $fontcolor = $thys->process_color("fontcolor");
     my $overflow  = $thys->get("overflow");
 
-    my $params =  sprintf( "par(bg=%s,col.main=%s,col.lab=%s,xpd=%s)",
-                           $bgcolor, $fontcolor, $fontcolor, $overflow );
+    my $params = sprintf( "par(bg=%s,col.main=%s,col.lab=%s,xpd=%s)",
+        $bgcolor, $fontcolor, $fontcolor, $overflow );
 
     return $params;
 }
@@ -184,11 +185,11 @@ sub query_legend {
 
     my $legend    = $thys->get("legend");
     my $point     = $thys->get("point");
-    my $color     = $thys->get("color");
+    my $color     = $thys->process_color("color");
+    my $fontcolor = $thys->process_color("fontcolor");
     my $linetype  = $thys->get("linetype");
-    my $fontcolor = $thys->get("fontcolor");
-    my $lborder   = $thys->get("legendborder");
-    my $lposition = $thys->get("legendposition");
+    my $lborder   = $thys->get("legendbor");
+    my $lposition = $thys->get("legendpos");
 
     return "" unless length $legend;
 
@@ -198,7 +199,7 @@ sub query_legend {
     return
       sprintf( "legend('%s',%s,fill=%s,cex=1,border=%s,bty='n'"
           . ",xpd=T,text.col=%s)",
-        $lposition, $legend, $color, $lborder, $fontcolor, );
+        $lposition, $legend, $color, $lborder, $fontcolor );
 }
 
 sub scat {
@@ -217,7 +218,7 @@ sub scat {
     my $ylabel    = $thys->get("ylabel");
     my $linestyle = $thys->get("linestyle");
 
-    if($data =~ /,/) {
+    if ( $data =~ /,/ ) {
         my @sets = split( /\|/, $data );
 
         $data = sprintf( "c(%s)", shift(@sets) );
@@ -263,11 +264,12 @@ sub bar {
     my @sets = split( /\|/, $data );
     my $sets = ~~ @sets;
 
-    if($data =~ /,/) {
+    if ( $data =~ /,/ ) {
         if ( $sets == 1 ) {
             $sets = ( $data =~ tr/,/,/ ) + 1;
             $data = sprintf( "c(%s)", shift @sets );
-        } else {
+        }
+        else {
             foreach (@sets) {
                 if ( $sets < ( $_ =~ tr/,/,/ ) + 1 ) {
                     $sets = ( $data =~ tr/,/,/ ) + 1;
@@ -304,7 +306,7 @@ sub pie {
     my $data  = $thys->get("data");
     my $title = $thys->get("title");
 
-    if($data =~ /,/) {
+    if ( $data =~ /,/ ) {
         $data =~ s/\|/,/g;
 
         my @sets = split( /,/, $data );
@@ -315,8 +317,8 @@ sub pie {
 
     my $color = $thys->process_color;
 
-    my $plot = sprintf(
-        "pie(%s,main=\"%s\",col=%s,init.angle=90,clockwise=1,radius=1)",
+    my $plot =
+      sprintf( "pie(%s,main=\"%s\",col=%s,init.angle=90,clockwise=1,radius=1)",
         $data, $title, $color );
 
     $thys->set( "plot", $plot );
@@ -340,14 +342,15 @@ sub box {
     my $xlabel = $thys->get("xlabel");
     my $ylabel = $thys->get("ylabel");
 
-    if($data =~ /,/) {
+    if ( $data =~ /,/ ) {
         my @sets = split( /\|/, $data );
         my $sets = ~~ @sets;
 
         if ( $sets == 1 ) {
             $sets = ( $data =~ tr/,/,/ ) + 1;
             $data = sprintf( "c(%s)", shift @sets );
-        } else {
+        }
+        else {
             foreach (@sets) {
                 if ( $sets < ( $_ =~ tr/,/,/ ) + 1 ) {
                     $sets = ( $data =~ tr/,/,/ ) + 1;
@@ -362,7 +365,7 @@ sub box {
     my $color = $thys->process_color;
 
     my $plot =
-        sprintf( "boxplot(%s,main=\"%s\",xlab=\"%s\",ylab=\"%s\",col=%s)",
+      sprintf( "boxplot(%s,main=\"%s\",xlab=\"%s\",ylab=\"%s\",col=%s)",
         $data, $title, $xlabel, $ylabel, $color );
 
     $thys->set( "plot", $plot );
@@ -387,7 +390,7 @@ sub hist {
     my $ylabel = $thys->get("ylabel");
     my $breaks = $thys->get("breaks");
 
-    if($data =~ /,/) {
+    if ( $data =~ /,/ ) {
         $data =~ s/\|/,/g;
 
         my @sets = split( /,/, $data );
@@ -399,8 +402,8 @@ sub hist {
     my $color = $thys->process_color;
 
     my $plot =
-        sprintf( "hist(%s,main=\"%s\",xlab=\"%s\",ylab=\"%s\",col=%s,"
-                 . "breaks='%s')",
+      sprintf(
+        "hist(%s,main=\"%s\",xlab=\"%s\",ylab=\"%s\",col=%s," . "breaks='%s')",
         $data, $title, $xlabel, $ylabel, $color, $breaks );
 
     $thys->set( "plot", $plot );
@@ -512,8 +515,8 @@ This document describes Rcmd::Plot version 0.0.1
         xlabel    - Label for x axis.
         ylabel    - Label for y axis.
         legend    - Vertical bar delimited string for legend names.
-        legendborder   - Border color for the legend.
-        legendposition - Position of the legend.
+        legendbor - Border color for the legend.
+        legendpos - Position of the legend.
         bgcolor   - Color for graph background.
         fontcolor - Color for graph text.
         overflow  - Set to True to draw outside plotting region.
