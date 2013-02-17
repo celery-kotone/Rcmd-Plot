@@ -99,8 +99,7 @@ sub process_color {
 
     if ( ~~ @_ ) {
         $type = shift;
-    }
-    else {
+    } else {
         $type = "color";
     }
 
@@ -113,11 +112,24 @@ sub process_color {
         $sets = 3;
     }
 
-    $color = sprintf( "rainbow(%d)", $sets ) if $color eq "default";
-    $color = sprintf( "brewer.pal(%d,'Spectral')", $sets ) if $color eq "mat";
-    $color = sprintf( "c(%s)", $color ) if $color =~ /rgb(.+?)/;
     $color =~ s/auto/$sets/g;
-    $color = sprintf( "'%s'", $color ) if $color =~ /^\w+$/;
+
+    if ( $color eq "default" ) {
+        $color = sprintf( "rainbow(%d)", $sets ) if $color eq "default";
+        return $color;
+    }
+
+    if ( $color eq "mat" ) {
+        $color = sprintf( "brewer.pal(%d,'Spectral')", $sets );
+        return $color;
+    }
+
+    if ( $color =~ /rgb\(.+\)/ ) {
+        $color = sprintf( "c(%s)", $color );
+        return $color;
+    }
+
+    $color = sprintf( "c('%s')", join( "','", split( /,/, $color ) ) );
 
     return $color;
 }
@@ -268,21 +280,19 @@ sub scat {
         my @sets = split( /\|/, $data );
         my $sets = ~~ @sets;
 
-        if( $sets > 1 ) {
-            while( ~~ @sets ) {
+        if ( $sets > 1 ) {
+            while ( ~~ @sets ) {
                 push( @x, sprintf( "c(%s)", shift @sets ) );
                 push( @y, sprintf( "c(%s)", shift @sets ) );
             }
 
-            $data = sprintf(
-                "cbind(%s),cbind(%s)",
-                join( ",", @x ),
-                join( ",", @y )
-                );
+            $data =
+              sprintf( "cbind(%s),cbind(%s)", join( ",", @x ),
+                join( ",", @y ) );
         } else {
             $data = sprintf( "c(%s)", $data );
         }
-        
+
         $thys->set( "sets", ~~ $sets );
     }
 
@@ -325,8 +335,7 @@ sub bar {
         if ( $sets == 1 ) {
             $sets = ( $data =~ tr/,/,/ ) + 1;
             $data = sprintf( "c(%s)", shift @sets );
-        }
-        else {
+        } else {
             foreach (@sets) {
                 if ( $sets < ( $_ =~ tr/,/,/ ) + 1 ) {
                     $sets = ( $data =~ tr/,/,/ ) + 1;
@@ -409,8 +418,7 @@ sub box {
         if ( $sets == 1 ) {
             $sets = ( $data =~ tr/,/,/ ) + 1;
             $data = sprintf( "c(%s)", shift @sets );
-        }
-        else {
+        } else {
             foreach (@sets) {
                 if ( $sets < ( $_ =~ tr/,/,/ ) + 1 ) {
                     $sets = ( $data =~ tr/,/,/ ) + 1;
