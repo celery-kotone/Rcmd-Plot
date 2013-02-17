@@ -20,15 +20,17 @@ my $chlt  = $cgi->param("chlt");
 my $chdl  = $cgi->param("chdl");
 my $chdlp = $cgi->param("chdlp");
 
-my ( $width,  $height ) = split /[x,\/\| \t]/, $chs;
-my ( $xlabel, $ylabel ) = split /[x,\/\| \t]/, $chxt;
+my ( $width,  $height ) = split /x/, $chs;
+my ( $xlabel, $ylabel ) = split /,/, $chxt;
+
+$chco = sprintf( "#%s", join( ",#", split( /,/, $chco ) ) )
+  if $chco =~ /^[\d\w,]+$/;
 
 my $jobid = time . substr( rand(10), -4 );
 
 while ( -e "./graph/" . $jobid . ".png" ) {
     $jobid = time . substr( rand(10), -4 );
 }
-
 my $filename = "$jobid.png";
 
 my $plot = Rcmd::Plot->new(
@@ -47,23 +49,27 @@ my $plot = Rcmd::Plot->new(
     filename => "./graph/$filename"
 );
 
-if ( $cht eq "scat" ) {
+if ( $cht eq "l" ) {
+    $plot->line();
+}
+
+if ( $cht eq "s" ) {
     $plot->scat();
 }
 
-if ( $cht eq "bar" ) {
+if ( $cht eq "b" ) {
     $plot->bar();
 }
 
-if ( $cht eq "pie" ) {
+if ( $cht eq "p" ) {
     $plot->pie();
 }
 
-if ( $cht eq "box" ) {
+if ( $cht eq "bw" ) {
     $plot->box();
 }
 
-if ( $cht eq "hist" ) {
+if ( $cht eq "h" ) {
     $plot->hist();
 }
 
