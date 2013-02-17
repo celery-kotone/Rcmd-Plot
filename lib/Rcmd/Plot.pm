@@ -40,7 +40,7 @@ sub new {
 
     my $thys = bless Rcmd->new, $class;
 
-    #$thys->set_mode("silent");
+    $thys->set_mode("silent");
     $thys->set_args(%defaults);
     $thys->set_args(%args);
 
@@ -115,6 +115,7 @@ sub process_color {
 
     $color = sprintf( "rainbow(%d)", $sets ) if $color eq "default";
     $color = sprintf( "brewer.pal(%d,'Spectral')", $sets ) if $color eq "mat";
+    $color = sprintf( "c(%s)", $color ) if $color =~ /rgb(.+?)/;
     $color =~ s/auto/$sets/g;
     $color = sprintf( "'%s'", $color ) if $color =~ /^\w+$/;
 
@@ -202,7 +203,7 @@ sub query_legend {
         $lposition, $legend, $color, $lborder, $fontcolor );
 }
 
-sub scat {
+sub line {
     my $thys = shift;
     my %args = (@_);
 
@@ -227,6 +228,62 @@ sub scat {
         }
 
         $thys->set( "sets", ~~ @sets );
+    }
+
+    my $color    = $thys->process_color;
+    my $point    = $thys->process_point;
+    my $linetype = $thys->process_linetype;
+
+    my $plot = sprintf(
+        "matplot(%s,main=\"%s\",col=%s,type=\"%s\","
+          . "xlab=\"%s\",ylab=\"%s\",pch=%s,lty=%s)",
+        $data,   $title,  $color, $linestyle,
+        $xlabel, $ylabel, $point, $linetype
+    );
+
+    $thys->set( "plot", $plot );
+    $thys->exec_plot;
+
+    return 0;
+}
+
+sub scat {
+    my $thys = shift;
+    my %args = (@_);
+
+    $thys->set_args(%args);
+
+    unless ( defined $thys->get("data") ) {
+        die("Plotting data not specified\n");
+    }
+
+    my $data      = $thys->get("data");
+    my $title     = $thys->get("title");
+    my $xlabel    = $thys->get("xlabel");
+    my $ylabel    = $thys->get("ylabel");
+    my $linestyle = $thys->get("linestyle");
+
+    if ( $data =~ /,/ ) {
+        my ( @x, @y );
+        my @sets = split( /\|/, $data );
+        my $sets = ~~ @sets;
+
+        if( $sets > 1 ) {
+            while( ~~ @sets ) {
+                push( @x, sprintf( "c(%s)", shift @sets ) );
+                push( @y, sprintf( "c(%s)", shift @sets ) );
+            }
+
+            $data = sprintf(
+                "cbind(%s),cbind(%s)",
+                join( ",", @x ),
+                join( ",", @y )
+                );
+        } else {
+            $data = sprintf( "c(%s)", $data );
+        }
+        
+        $thys->set( "sets", ~~ $sets );
     }
 
     my $color    = $thys->process_color;
@@ -534,6 +591,8 @@ This document describes Rcmd::Plot version 0.0.1
         $thys->hist():
         breaks - Values to set breaks.
         
+=head2 Rcmd::Plot->line()
+    Performs a line plot with the given data.
 
 =head2 Rcmd::Plot->scat()
     Performs a scatter plot with the given data.
