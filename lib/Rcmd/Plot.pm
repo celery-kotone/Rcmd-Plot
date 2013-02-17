@@ -283,8 +283,11 @@ sub bar {
 
     my $color = $thys->process_color;
 
+    $xlabel = sprintf( "c('%s')", $xlabel );
+    $xlabel =~ s/\|/','/g;
+
     my $plot =
-      sprintf( "barplot(%s,main=\"%s\",xlab=\"%s\",ylab=\"%s\",col=%s)",
+      sprintf( "barplot(%s,main=\"%s\",names.arg=%s,ylab=\"%s\",col=%s)",
         $data, $title, $xlabel, $ylabel, $color );
 
     $thys->set( "plot", $plot );
