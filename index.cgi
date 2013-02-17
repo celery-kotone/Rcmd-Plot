@@ -24,7 +24,7 @@ my ( $width,  $height ) = split /x/, $chs;
 my ( $xlabel, $ylabel ) = split /,/, $chxt;
 
 $chco = sprintf( "#%s", join( ",#", split( /,/, $chco ) ) )
-  if $chco =~ /^[\dABCDEF,]{6}$/;
+  if $chco =~ /^[(?:[\dABCDEF]{6}),]+/;
 
 my $jobid = time . substr( rand(10), -4 );
 
