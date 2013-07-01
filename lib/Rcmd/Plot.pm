@@ -6,9 +6,7 @@ use Carp;
 
 use version; our $VERSION = qv('1.0.0');
 
-use base qw(Class::Accessor Rcmd);
-
-Rcmd::Plot->follow_best_practice;
+use base qw(Rcmd);
 
 my %defaults = (
     "width"     => 640,
@@ -16,7 +14,7 @@ my %defaults = (
     "title"     => "",
     "xlabel"    => "",
     "ylabel"    => "",
-    "format"    => "postscript",
+    "format"    => "png",
     "filename"  => "default",
     "color"     => "default",
     "linestyle" => "p",
@@ -25,7 +23,7 @@ my %defaults = (
     "legend"    => "",
     "legendbor" => "rgb(0,0,0,alpha=0)",
     "legendpos" => "topleft",
-    "internal"  => "library(RColorBrewer)",
+    "internal"  => "library(RColorBrewer)\nlibrary(venneuler)",
     "library"   => "",
     "bgcolor"   => "white",
     "fontcolor" => "black",
@@ -53,6 +51,16 @@ sub DESTROY {
     return 0;
 }
 
+sub get {
+    my ($thys, $key) = (@_);
+    return $thys->{$key};
+}
+
+sub set {
+    my ($thys, $key, $value) = (@_);
+    return $thys->{$key} = $value;
+}
+
 sub exec_plot {
     my $thys = shift;
 
@@ -67,7 +75,7 @@ sub exec_plot {
     my $filename = $thys->get("filename");
 
     my $dev = sprintf( "%s(file=\"%s\",width=%d,height=%d)",
-        $format, $filename, $width, $height );
+                       $format, $filename, $width, $height );
 
     $thys->exec(
         $internal,
@@ -76,6 +84,34 @@ sub exec_plot {
         $thys->query_params,
         $plot,
         $thys->query_legend,
+        "graphics.off()"
+        );
+
+    return 0;
+}
+
+sub exec_plot_no_legend {
+    my $thys = shift;
+
+    $thys->process_filename;
+
+    my $plot     = $thys->get("plot");
+    my $width    = $thys->get("width");
+    my $height   = $thys->get("height");
+    my $internal = $thys->get("internal");
+    my $library  = $thys->get("library");
+    my $format   = $thys->get("format");
+    my $filename = $thys->get("filename");
+
+    my $dev = sprintf( "%s(file=\"%s\",width=%d,height=%d)",
+                       $format, $filename, $width, $height );
+
+    $thys->exec(
+        $internal,
+        $library,
+        $dev,
+        $thys->query_params,
+        $plot,
         "graphics.off()"
         );
 
@@ -91,6 +127,29 @@ sub set_args {
     }
 
     return 0;
+}
+
+sub process_data {
+    my $thys = shift;
+    my $data = $thys->get("data");
+    my $ret;
+    my @tmp;
+
+    if(ref $data eq "ARRAY") {
+        if(ref $data->[0] eq "ARRAY") {
+            foreach my $array (@{$data}) {
+                push @tmp, join ",", @{$array};
+            }
+
+            $ret = join "|", @tmp;
+        } else {
+            $ret = join ",", @{$data};
+        }
+    } else {
+        $ret = $data;
+    }
+
+    return $ret;
 }
 
 sub process_color {
@@ -206,6 +265,10 @@ sub query_legend {
 
     return "" unless length $legend;
 
+    if(ref $legend eq "ARRAY") {
+        $legend = join "|", @{$legend};
+    }
+
     $legend = sprintf( "c('%s')", $legend );
     $legend =~ s/\|/','/g;
 
@@ -225,7 +288,7 @@ sub line {
         die("Plotting data not specified\n");
     }
 
-    my $data      = $thys->get("data");
+    my $data      = $thys->process_data;
     my $title     = $thys->get("title");
     my $xlabel    = $thys->get("xlabel");
     my $ylabel    = $thys->get("ylabel");
@@ -269,7 +332,7 @@ sub scat {
         die("Plotting data not specified\n");
     }
 
-    my $data      = $thys->get("data");
+    my $data      = $thys->process_data;
     my $title     = $thys->get("title");
     my $xlabel    = $thys->get("xlabel");
     my $ylabel    = $thys->get("ylabel");
@@ -323,7 +386,7 @@ sub bar {
         die("Plotting data not specified\n");
     }
 
-    my $data   = $thys->get("data");
+    my $data   = $thys->process_data;
     my $title  = $thys->get("title");
     my $xlabel = $thys->get("xlabel");
     my $ylabel = $thys->get("ylabel");
@@ -372,7 +435,7 @@ sub pie {
         die("Plotting data not specified\n");
     }
 
-    my $data  = $thys->get("data");
+    my $data  = $thys->process_data;
     my $title = $thys->get("title");
 
     if ( $data =~ /,/ ) {
@@ -406,7 +469,7 @@ sub box {
         die("Plotting data not specified\n");
     }
 
-    my $data   = $thys->get("data");
+    my $data   = $thys->process_data;
     my $title  = $thys->get("title");
     my $xlabel = $thys->get("xlabel");
     my $ylabel = $thys->get("ylabel");
@@ -452,7 +515,7 @@ sub hist {
         die("Plotting data not specified\n");
     }
 
-    my $data   = $thys->get("data");
+    my $data   = $thys->process_data;
     my $title  = $thys->get("title");
     my $xlabel = $thys->get("xlabel");
     my $ylabel = $thys->get("ylabel");
@@ -480,7 +543,6 @@ sub hist {
     return 0;
 }
 
-q^
 sub venn {
     my $thys = shift;
     my %args = (@_);
@@ -491,43 +553,43 @@ sub venn {
         die("Plotting data not specified\n");
     }
 
-    my $data   = $thys->get("data");
-    my $title  = $thys->get("title");
-    my $xlabel = $thys->get("xlabel");
-    my $ylabel = $thys->get("ylabel");
+    my $data  = $thys->process_data;
+    my $title = $thys->get("title");
+    my $label = $thys->get("legend");
 
-
-    if($data =~ /,/) {
-        my @sets = split( /\|/, $data );
-        my $sets = ~~ @sets;
-
-        if ( $sets == 1 ) {
-            $sets = ( $data =~ tr/,/,/ ) + 1;
-            $data = sprintf( "c(%s)", shift @sets );
-        } else {
-            foreach (@sets) {
-                if ( $sets < ( $_ =~ tr/,/,/ ) + 1 ) {
-                    $sets = ( $data =~ tr/,/,/ ) + 1;
-                }
-            }
-            $data = sprintf( "list(c(%s))", join( "),c(", @sets ) );
-        }
-
-        $thys->set( "sets", $sets );
+    unless($label) {
+        $label = [qw/A B C/];
     }
 
-    my $color = $thys->process_color;
+    if(ref $label ne "ARRAY") {
+        $label = [split /\|/, $label];
+    }
 
-    my $plot =
-        sprintf( "boxplot(%s,main=\"%s\",xlab=\"%s\",ylab=\"%s\",col=%s)",
-        $data, $title, $xlabel, $ylabel, $color );
+    if($data =~ /\|/) {
+        my @groups = split /\|/, $data;
+        my $groupA = sprintf "%s=c(%s)", @{$label}[0], $groups[0];
+        my $groupB = sprintf "%s=c(%s)", @{$label}[1], $groups[1];
+        my $groupC = sprintf "%s=c(%s)", @{$label}[2], $groups[2];
+        $data = "as.matrix(data.frame($groupA, $groupB, $groupC))";
+        print $data,"\n";
+    } else {
+        my ($da, $db, $dc, $dab, $dbc, $dac, $dabc) = split /,/, $data;
+        my ($la, $lb, $lc) = @{$label};
+
+        my $color = $thys->process_color;
+
+        $data = sprintf "c(%s=%s,%s=%s,%s=%s,'%s&%s'=%s,'%s&%s'=%s,".
+          "'%s&%s'=%s,'%s&%s&%s'=%s)", $la, $da, $lb, $db, $lc, $dc, $la, $lb,
+          $dab, $lb, $lc, $dbc, $la, $lc, $dac, $la, $lb, $lc, $dabc;
+    }
+
+    my $plot = sprintf( "plot(venneuler(%s))", $data);
 
     $thys->set( "plot", $plot );
-    $thys->exec_plot;
+    $thys->exec_plot_no_legend;
 
     return 0;
 }
-^ if 0;
 
 1;    # Magic true value required at end of module
 __END__
@@ -598,7 +660,7 @@ This document describes Rcmd::Plot version 0.0.1
 
         $thys->hist():
         breaks - Values to set breaks.
-        
+
 =head2 Rcmd::Plot->line()
     Performs a line plot with the given data.
 
@@ -617,8 +679,18 @@ This document describes Rcmd::Plot version 0.0.1
 =head2 Rcmd::Plot->hist()
     Performs a histogram plot with the given data.
 
+=head2 Rcmd::Plot->hist()
+    Performs a venn diagram plot with the given data.
+
 =head2 Rcmd::Plot->exec_plot()
     Perform a plot manually with the query in 'plot' member.
+
+=head2 Rcmd::Plot->exec_plot_no_legend()
+    Perform a plot manually with the query in 'plot' member without setting
+    legends. Useful in cases of venn diagram plotting.
+
+=head2 Rcmd::Plot->process_data()
+    Converts the 'data' member to string.
 
 =head2 Rcmd::Plot->process_color()
     Converts the 'color' member to R format.
@@ -638,11 +710,16 @@ This document describes Rcmd::Plot version 0.0.1
 =head2 Rcmd::Plot->query_params()
     Creates R 'par' query string.
 
+=head2 Rcmd::Plot->get("key")
+    Get the value for the specified key.
+
+=head2 Rcmd::Plot->set("key", "value")
+    Set a value for the specified key.
+
 =head2 Rcmd::Plot->set_args()
     Set multiple arguments.
-    
 
-=head1 INTERFACE 
+=head1 INTERFACE
 
 Constructor:
 $plot = Rcmd::Plot->new(<arguments>)
